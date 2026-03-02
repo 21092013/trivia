@@ -657,89 +657,91 @@
  </div>
  </div>
 
- <!-- ADMIN LOGIN -->
- <div class="screen" id="screen-admin-login">
- <div class="logo">
- <h1 style="font-size:1.5rem;">כניסת מנהל </h1>
- </div>
- <div class="card">
- <div class="form-group">
- <label>סיסמה</label>
- <input type="password" id="admin-pw" placeholder="הכנס סיסמה..." onkeyup="if(event.key==='Enter')checkAdminLogin()">
- </div>
- <button class="btn-primary" onclick="checkAdminLogin()">כניסה</button>
- <button class="btn-secondary" onclick="showScreen('screen-home')">חזרה</button>
-
- </div>
- </div>
-
- <!-- ADMIN PANEL -->
- <div class="screen" id="screen-admin">
- <div class="logo">
- <h1 style="font-size:1.5rem;">פאנל ניהול ️</h1>
- </div>
- <div class="card">
- <div class="tabs">
- <button class="tab-btn active" onclick="showAdminTab('add')"> הוסף שאלה</button>
- <button class="tab-btn" onclick="showAdminTab('list')"> רשימת שאלות</button>
- </div>
-
- <!-- ADD QUESTION -->
- <div id="tab-add">
- <div class="form-group">
- <label>רמת קושי</label>
- <select id="q-level">
- <option value="easy"> קל</option>
- <option value="medium"> בינוני</option>
- <option value="hard"> קשה</option>
- </select>
- </div>
- <div class="form-group">
- <label>השאלה</label>
- <textarea id="q-input" placeholder="כתוב את השאלה כאן..."></textarea>
- </div>
- <div class="form-group">
- <label>4 תשובות</label>
- <div class="answers-inputs">
- <input type="text" id="a1" placeholder="תשובה א">
- <input type="text" id="a2" placeholder="תשובה ב">
- <input type="text" id="a3" placeholder="תשובה ג">
- <input type="text" id="a4" placeholder="תשובה ד">
- </div>
- </div>
- <div class="form-group">
- <label>תשובה נכונה</label>
- <div class="correct-select">
- <label><input type="radio" name="correct" value="0"> א</label>
- <label><input type="radio" name="correct" value="1"> ב</label>
- <label><input type="radio" name="correct" value="2"> ג</label>
- <label><input type="radio" name="correct" value="3"> ד</label>
- </div>
- </div>
- <div class="form-group">
- <label>הסבר (אופציונלי)</label>
- <input type="text" id="q-exp" placeholder="הסבר קצר לתשובה הנכונה...">
- </div>
- <button class="btn-primary" onclick="addQuestion()"> הוסף שאלה</button>
- </div>
-
- <!-- LIST QUESTIONS -->
- <div id="tab-list" style="display:none">
- <div class="form-group">
- <select id="filter-level" onchange="renderQuestionsList()">
- <option value="all">כל הרמות</option>
- <option value="easy"> קל</option>
- <option value="medium"> בינוני</option>
- <option value="hard"> קשה</option>
- </select>
- </div>
- <div class="questions-list" id="questions-list"></div>
- </div>
-
- <button class="btn-secondary" onclick="showScreen('screen-home')" style="margin-top:15px;"> חזרה לדף הבית</button>
- </div>
- </div>
+<!-- ADMIN LOGIN -->
+<div class="screen" id="screen-admin-login">
+  <div class="logo">
+    <h1 style="font-size:1.5rem;">כניסת מנהל </h1>
+  </div>
+  <div class="card">
+    <div class="form-group">
+      <label>סיסמה</label>
+      <input type="password" id="admin-pw" placeholder="הכנס סיסמה..." onkeyup="if(event.key==='Enter')checkAdminLogin()">
+    </div>
+    <button class="btn-primary" onclick="checkAdminLogin()">כניסה</button>
+    <button class="btn-secondary" onclick="showScreen('screen-home')">חזרה</button>
+  </div>
 </div>
+
+
+<!-- ADMIN PANEL -->
+<div class="screen" id="screen-admin">
+  <div class="logo">
+    <h1 style="font-size:1.5rem;">פאנל ניהול ️</h1>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showAdminTab('add')"> הוסף שאלה</button>
+      <button class="tab-btn" onclick="showAdminTab('list')"> רשימת שאלות</button>
+    </div>
+
+    <!-- ADD QUESTION -->
+    <div id="tab-add">
+      <div class="form-group">
+        <label>רמת קושי</label>
+        <select id="q-level">
+          <option value="easy"> קל</option>
+          <option value="medium"> בינוני</option>
+          <option value="hard"> קשה</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>השאלה</label>
+        <textarea id="q-input" placeholder="כתוב את השאלה כאן..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>4 תשובות</label>
+        <div class="answers-inputs">
+          <input type="text" id="a1" placeholder="תשובה א">
+          <input type="text" id="a2" placeholder="תשובה ב">
+          <input type="text" id="a3" placeholder="תשובה ג">
+          <input type="text" id="a4" placeholder="תשובה ד">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>תשובה נכונה</label>
+        <div class="correct-select">
+          <label><input type="radio" name="correct" value="0"> א</label>
+          <label><input type="radio" name="correct" value="1"> ב</label>
+          <label><input type="radio" name="correct" value="2"> ג</label>
+          <label><input type="radio" name="correct" value="3"> ד</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>הסבר (אופציונלי)</label>
+        <input type="text" id="q-exp" placeholder="הסבר קצר לתשובה הנכונה...">
+      </div>
+      <button class="btn-primary" onclick="addQuestion()"> הוסף שאלה</button>
+    </div>
+   <!-- Toast -->
+<div class="success-toast" id="toast"> השאלה נוספה בהצלחה!</div>
+
+    <!-- LIST QUESTIONS -->
+    <div id="tab-list" style="display:none">
+      <div class="form-group">
+        <select id="filter-level" onchange="renderQuestionsList()">
+          <option value="all">כל הרמות</option>
+          <option value="easy"> קל</option>
+          <option value="medium"> בינוני</option>
+          <option value="hard"> קשה</option>
+        </select>
+      </div>
+      <div class="questions-list" id="questions-list"></div>
+    </div>
+
+    <button class="btn-secondary" onclick="showScreen('screen-home')" style="margin-top:15px;"> חזרה לדף הבית</button>
+  </div>
+</div>
+
 
 <!-- Feedback overlay -->
 <div class="feedback-overlay" id="feedback-overlay">
