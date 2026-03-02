@@ -756,10 +756,6 @@
 <div class="success-toast" id="toast"> השאלה נוספה בהצלחה!</div>
 
 <script>
-// ============= DEFAULT QUESTIONS =============
-
-// Firebase initialized via separate script tags below
-
 // ============= STATE =============
 window.questions = { easy: [], medium: [], hard: [] };
 let questions = window.questions;
@@ -1123,6 +1119,16 @@ window.showAdminTab = showAdminTab;
 window.addQuestion = addQuestion;
 window.renderQuestionsList = renderQuestionsList;
 
+// Listen for real-time Firebase updates
+document.addEventListener('questions-updated', function(e) {
+  questions = e.detail;
+  window.questions = e.detail;
+  var adminScreen = document.getElementById('screen-admin');
+  if (adminScreen && adminScreen.classList.contains('active')) {
+    renderQuestionsList();
+  }
+});
+
 // Init - wait for firebase or load after short delay
 function initApp() {
   loadQuestions();
@@ -1161,242 +1167,12 @@ if (window._firebaseReady) {
   // Real-time listener - updates questions on ALL devices instantly
   const docRef = doc(window._db, 'trivia', 'questions');
   onSnapshot(docRef, (snap) => {
-    if (snap.exists() && window.questions) {
-      window.questions = snap.data();
-      // If admin panel is open, refresh the list
-      const adminScreen = document.getElementById('screen-admin');
-      if (adminScreen && adminScreen.classList.contains('active')) {
-        if (typeof window.renderQuestionsList === 'function') {
-          window.renderQuestionsList();
-        }
-      }
+    if (snap.exists()) {
+      const data = snap.data();
+      window.questions = data;
+      document.dispatchEvent(new CustomEvent('questions-updated', { detail: data }));
     }
   });
-</script>
-</body>
-</html>
- indices.sort(() => Math.random() - 0.5);
- const correctLetter = indices.indexOf(q.c);
-
- indices.forEach((origIdx, displayIdx) => {
- const btn = document.createElement('button');
- btn.className = 'answer-btn';
- btn.innerHTML = `<span class="answer-letter">${letters[displayIdx]}</span>${q.a[origIdx]}`;
- btn.onclick = () => handleAnswer(btn, origIdx === q.c, q, correctLetter, displayIdx);
- grid.appendChild(btn);
- });
-}
-
-function handleAnswer(btn, isCorrect, q, correctDisplayIdx, clickedIdx) {
- if (answered) return;
- answered = true;
-
- const btns = document.querySelectorAll('.answer-btn');
- btns.forEach(b => b.disabled = true);
-
- if (isCorrect) {
- btn.classList.add('correct');
- score += POINTS[currentLevel];
- correctCount++;
- showFeedback(true, POINTS[currentLevel], q.exp);
- } else {
- btn.classList.add('wrong');
- btns[correctDisplayIdx].classList.add('reveal-correct');
- wrongCount++;
- showFeedback(false, 0, q.exp);
- }
-
- document.getElementById('score-display').textContent = score;
- document.getElementById('next-btn').classList.add('show');
-}
-
-function showFeedback(correct, pts, explanation) {
- const overlay = document.getElementById('feedback-overlay');
- document.getElementById('fb-icon').textContent = correct ? '' : '';
- document.getElementById('fb-title').textContent = correct ? 'כל הכבוד!' : 'לא נכון...';
- document.getElementById('fb-points').textContent = correct ? `+${pts} נקודות` : 'לא קיבלת נקודות';
- document.getElementById('fb-exp').textContent = explanation || '';
-
- overlay.classList.add('show');
- overlay.style.pointerEvents = 'all';
- overlay.onclick = () => { overlay.classList.remove('show'); overlay.style.pointerEvents = 'none'; };
-
- // Show points pop
- if (correct) {
- const pop = document.createElement('div');
- pop.className = 'points-pop';
- pop.textContent = `+${pts}`;
- pop.style.top = '40%';
- pop.style.right = '50%';
- pop.style.transform = 'translateX(50%)';
- document.body.appendChild(pop);
- setTimeout(() => pop.remove(), 1000);
- }
-
- setTimeout(() => {
- overlay.classList.remove('show');
- overlay.style.pointerEvents = 'none';
- }, 1500);
-}
-
-function nextQuestion() {
- currentIndex++;
- renderQuestion();
-}
-
-function showResults() {
- const total = currentQuestions.length;
- const pct = Math.round((correctCount / total) * 100);
-
- document.getElementById('final-score').textContent = score;
- document.getElementById('stat-correct').textContent = correctCount;
- document.getElementById('stat-wrong').textContent = wrongCount;
- document.getElementById('stat-pct').textContent = pct + '%';
-
- let emoji, msg, sub;
- if (pct >= 90) { emoji = ''; msg = 'גאון מוחלט!'; sub = 'תוצאה מדהימה - אתה אמיתי!'; }
- else if (pct >= 70) { emoji = ''; msg = 'כל הכבוד!'; sub = 'תוצאה מצוינת, כמעט שם!'; }
- else if (pct >= 50) { emoji = ''; msg = 'לא רע!'; sub = 'אפשר להשתפר עוד קצת'; }
- else { emoji = ''; msg = 'נסה שוב!'; sub = 'קרא ולמד - בפעם הבאה תהיה מוכן יותר'; }
-
- document.getElementById('result-emoji').textContent = emoji;
- document.getElementById('result-msg').textContent = msg;
- document.getElementById('result-sub').textContent = sub;
-
- showScreen('screen-results');
- if (pct >= 70) launchConfetti();
-}
-
-// ============= CONFETTI =============
-function launchConfetti() {
- const colors = ['#ffd700','#ff6b6b','#a29bfe','#00c896','#ff9f43'];
- for (let i = 0; i < 60; i++) {
- setTimeout(() => {
- const c = document.createElement('div');
- c.className = 'confetti-piece';
- c.style.left = Math.random() * 100 + 'vw';
- c.style.background = colors[Math.floor(Math.random() * colors.length)];
- c.style.width = (Math.random() * 8 + 6) + 'px';
- c.style.height = (Math.random() * 8 + 6) + 'px';
- c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
- c.style.animationDuration = (Math.random() * 2 + 2) + 's';
- c.style.animationDelay = (Math.random() * 0.5) + 's';
- document.body.appendChild(c);
- setTimeout(() => c.remove(), 4000);
- }, i * 30);
- }
-}
-
-// ============= ADMIN =============
-function showAdminLogin() {
- document.getElementById('admin-pw').value = '';
- showScreen('screen-admin-login');
-}
-
-function checkAdminLogin() {
- const pw = document.getElementById('admin-pw').value;
- if (pw === '12092013') {
- showScreen('screen-admin');
- showAdminTab('add');
- } else {
- document.getElementById('admin-pw').style.borderColor = '#ff4757';
- document.getElementById('admin-pw').placeholder = 'סיסמה שגויה!';
- setTimeout(() => {
- document.getElementById('admin-pw').style.borderColor = '';
- document.getElementById('admin-pw').placeholder = 'הכנס סיסמה...';
- }, 1500);
- }
-}
-
-function showAdminTab(tab) {
- document.querySelectorAll('.tab-btn').forEach((b, i) => {
- b.classList.toggle('active', (i === 0 && tab === 'add') || (i === 1 && tab === 'list'));
- });
- document.getElementById('tab-add').style.display = tab === 'add' ? 'block' : 'none';
- document.getElementById('tab-list').style.display = tab === 'list' ? 'block' : 'none';
- if (tab === 'list') renderQuestionsList();
-}
-
-function addQuestion() {
- const level = document.getElementById('q-level').value;
- const qText = document.getElementById('q-input').value.trim();
- const a1 = document.getElementById('a1').value.trim();
- const a2 = document.getElementById('a2').value.trim();
- const a3 = document.getElementById('a3').value.trim();
- const a4 = document.getElementById('a4').value.trim();
- const correct = document.querySelector('input[name="correct"]:checked');
- const exp = document.getElementById('q-exp').value.trim();
-
- if (!qText || !a1 || !a2 || !a3 || !a4 || !correct) {
- alert('מלא את כל השדות!');
- return;
- }
-
- questions[level].push({ q: qText, a: [a1, a2, a3, a4], c: parseInt(correct.value), exp });
- saveQuestions();
-
- // Reset
- document.getElementById('q-input').value = '';
- document.getElementById('a1').value = '';
- document.getElementById('a2').value = '';
- document.getElementById('a3').value = '';
- document.getElementById('a4').value = '';
- document.getElementById('q-exp').value = '';
- document.querySelectorAll('input[name="correct"]').forEach(r => r.checked = false);
-
- const toast = document.getElementById('toast');
- toast.style.display = 'block';
- setTimeout(() => toast.style.display = 'none', 2000);
-}
-
-function renderQuestionsList() {
- const filter = document.getElementById('filter-level').value;
- const list = document.getElementById('questions-list');
- list.innerHTML = '';
- const levelNames = { easy: ' קל', medium: ' בינוני', hard: ' קשה' };
- const levels = filter === 'all' ? ['easy','medium','hard'] : [filter];
- let total = 0;
-
- levels.forEach(lv => {
- questions[lv].forEach((q, idx) => {
- total++;
- const div = document.createElement('div');
- div.className = 'q-item';
-
- const info = document.createElement('div');
- const qTextEl = document.createElement('div');
- qTextEl.className = 'q-text';
- qTextEl.textContent = q.q;
- const qMeta = document.createElement('div');
- qMeta.className = 'q-meta';
- qMeta.textContent = levelNames[lv] + ' • ' + q.a[q.c];
- info.appendChild(qTextEl);
- info.appendChild(qMeta);
-
- const delBtn = document.createElement('button');
- delBtn.className = 'del-btn';
- delBtn.textContent = 'מחק';
- 
- // capture lv and idx in closure
- (function(capturedLevel, capturedIdx) {
- delBtn.onclick = function() {
- if (!confirm('האם למחוק את השאלה?')) return;
- questions[capturedLevel].splice(capturedIdx, 1);
- saveQuestions();
- renderQuestionsList();
- };
- })(lv, idx);
-
- div.appendChild(info);
- div.appendChild(delBtn);
- list.appendChild(div);
- });
- });
-
- if (total === 0) {
- list.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.3);padding:20px;">אין שאלות ברמה זו</p>';
- }
-}
 </script>
 </body>
 </html>
