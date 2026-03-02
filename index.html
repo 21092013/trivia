@@ -755,134 +755,220 @@
 <div class="success-toast" id="toast"> השאלה נוספה בהצלחה!</div>
 
 <script>
-// ======== משתנים כלליים ========
-let currentLevel = 'easy';
+// ========= GLOBALS =========
+let currentLevel = '';
 let questions = [];
-let currentIndex = 0;
+let currentQIndex = 0;
 let score = 0;
+let correctCount = 0;
+let wrongCount = 0;
 
-// ======== מעבר מסכים ========
+// ========= SCREEN SWITCH =========
 function showScreen(screenId){
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
 }
 
-// ======== התחלת משחק ========
+// ========= START GAME =========
 function startGame(level){
   currentLevel = level;
-  questions = [...defaultQuestions[level]]; // מעתיקים את השאלות
-  currentIndex = 0;
+  questions = [...defaultQuestions[level]]; // copy questions
+  currentQIndex = 0;
   score = 0;
+  correctCount = 0;
+  wrongCount = 0;
 
-  document.getElementById('score-display').innerText = score;
-  document.getElementById('level-badge').innerText = level === 'easy' ? 'קל' : level === 'medium' ? 'בינוני' : 'קשה';
-  updateProgress();
+  document.getElementById('score-display').textContent = score;
+  document.getElementById('level-badge').textContent = levelText(level);
+  document.getElementById('progress-info').textContent = `שאלה 1 מתוך ${questions.length}`;
+  updateProgressBar();
   showScreen('screen-game');
   renderQuestion();
 }
 
-// ======== עדכון פרוגרס ========
-function updateProgress(){
-  document.getElementById('progress-info').innerText = `שאלה ${currentIndex+1} מתוך ${questions.length}`;
-  let pct = ((currentIndex) / questions.length) * 100;
-  document.getElementById('progress-fill').style.width = pct + '%';
-}
-
-// ======== הצגת שאלה ========
+// ========= RENDER QUESTION =========
 function renderQuestion(){
-  const q = questions[currentIndex];
-  document.getElementById('q-number').innerText = `שאלה ${currentIndex+1}`;
-  document.getElementById('q-text').innerText = q.q;
+  const q = questions[currentQIndex];
+  document.getElementById('q-number').textContent = `שאלה ${currentQIndex+1}`;
+  document.getElementById('q-text').textContent = q.q;
 
   const grid = document.getElementById('answers-grid');
   grid.innerHTML = '';
-  q.a.forEach((ans, idx)=>{
+  q.a.forEach((ans, i)=>{
     const btn = document.createElement('button');
     btn.className = 'answer-btn';
-    btn.innerHTML = `<span class="answer-letter">${String.fromCharCode(1488+idx)}</span>${ans}`;
-    btn.onclick = () => checkAnswer(idx);
+    btn.innerHTML = `<div class="answer-letter">${String.fromCharCode(65+i)}</div>${ans}`;
+    btn.onclick = ()=>checkAnswer(i);
     grid.appendChild(btn);
   });
 
   document.getElementById('next-btn').classList.remove('show');
 }
 
-// ======== בדיקת תשובה ========
+// ========= CHECK ANSWER =========
 function checkAnswer(selected){
-  const q = questions[currentIndex];
-  const buttons = document.querySelectorAll('#answers-grid .answer-btn');
-  buttons.forEach((btn,i)=>{
+  const q = questions[currentQIndex];
+  const buttons = document.querySelectorAll('.answers-grid .answer-btn');
+  buttons.forEach((btn, i)=>{
     btn.disabled = true;
     if(i===q.c) btn.classList.add('correct');
     if(i===selected && i!==q.c) btn.classList.add('wrong');
   });
 
-  if(selected === q.c) score += 100;
-  document.getElementById('score-display').innerText = score;
+  if(selected===q.c){
+    score += 10;
+    correctCount++;
+  } else { wrongCount++; }
+
+  document.getElementById('score-display').textContent = score;
+  showFeedback(q, selected);
   document.getElementById('next-btn').classList.add('show');
+  updateProgressBar();
 }
 
-// ======== שאלה הבאה ========
+// ========= FEEDBACK POPUP =========
+function showFeedback(q, selected){
+  const overlay = document.getElementById('feedback-overlay');
+  document.getElementById('fb-icon').textContent = selected===q.c ? '✔️' : '❌';
+  document.getElementById('fb-title').textContent = selected===q.c ? 'נכון!' : 'לא נכון';
+  document.getElementById('fb-points').textContent = selected===q.c ? '+10 נקודות' : '+0 נקודות';
+  document.getElementById('fb-exp').textContent = q.exp;
+  overlay.classList.add('show');
+  setTimeout(()=>overlay.classList.remove('show'), 1500);
+}
+
+// ========= NEXT QUESTION =========
 function nextQuestion(){
-  currentIndex++;
-  if(currentIndex >= questions.length){
+  currentQIndex++;
+  if(currentQIndex >= questions.length){
     showResults();
-    return;
+  } else {
+    renderQuestion();
+    document.getElementById('progress-info').textContent = `שאלה ${currentQIndex+1} מתוך ${questions.length}`;
   }
-  updateProgress();
-  renderQuestion();
 }
 
-// ======== תוצאות ========
+// ========= UPDATE PROGRESS BAR =========
+function updateProgressBar(){
+  const perc = ((currentQIndex)/questions.length)*100;
+  document.getElementById('progress-fill').style.width = `${perc}%`;
+}
+
+// ========= SHOW RESULTS =========
 function showResults(){
-  document.getElementById('final-score').innerText = score;
-  showScreen('screen-results');
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('stat-correct').textContent = correctCount;
+  document.getElementById('stat-wrong').textContent = wrongCount;
+  document.getElementById('stat-pct').textContent = `${Math.round(correctCount/questions.length*100)}%`;
 
-  let correct = questions.filter((q,i)=>true).length; // אפשר להוסיף ספירה נכונה/שגויה
-  document.getElementById('stat-correct').innerText = correct;
-  document.getElementById('stat-wrong').innerText = questions.length - correct;
-  document.getElementById('stat-pct').innerText = Math.round((correct/questions.length)*100)+'%';
+  // emoji & msg
+  const emoji = document.getElementById('result-emoji');
+  const msg = document.getElementById('result-msg');
+  const sub = document.getElementById('result-sub');
+  if(score > questions.length*7){
+    emoji.textContent = '🎉';
+    msg.textContent = 'כל הכבוד!';
+    sub.textContent = 'תוצאה מעולה';
+  } else if(score > questions.length*4){
+    emoji.textContent = '🙂';
+    msg.textContent = 'לא רע!';
+    sub.textContent = 'אפשר להשתפר';
+  } else {
+    emoji.textContent = '😟';
+    msg.textContent = 'צריך לתרגל יותר';
+    sub.textContent = 'אל תוותר!';
+  }
+
+  showScreen('screen-results');
 }
 
-// ======== ניהול ========
+// ========= HELPERS =========
+function levelText(l){
+  return l==='easy'?'קל':l==='medium'?'בינוני':'קשה';
+}
+
+// ========== ADMIN LOGIN =========
+const adminPassword = "1234"; // לשנות בעתיד
 function showAdminLogin(){ showScreen('screen-admin-login'); }
 function checkAdminLogin(){
   const pw = document.getElementById('admin-pw').value;
-  if(pw==='1234'){ showScreen('screen-admin'); }
-  else alert('סיסמה שגויה');
+  if(pw===adminPassword) showScreen('screen-admin');
+  else alert('סיסמה שגויה!');
 }
 
-// ======== להוסיף שאלה ========
+// ========== ADMIN TABS =========
+function showAdminTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#tab-add,#tab-list').forEach(t=>t.style.display='none');
+  document.querySelector(`.tab-btn[onclick="showAdminTab('${tab}')"]`).classList.add('active');
+  document.getElementById('tab-'+tab).style.display='block';
+}
+
+// ========= ADD QUESTION =========
 function addQuestion(){
   const level = document.getElementById('q-level').value;
-  const qText = document.getElementById('q-input').value;
-  const answers = [
-    document.getElementById('a1').value,
-    document.getElementById('a2').value,
-    document.getElementById('a3').value,
-    document.getElementById('a4').value
-  ];
-  const correct = document.querySelector('input[name="correct"]:checked')?.value;
-  const exp = document.getElementById('q-exp').value;
+  const qText = document.getElementById('q-input').value.trim();
+  const a1 = document.getElementById('a1').value.trim();
+  const a2 = document.getElementById('a2').value.trim();
+  const a3 = document.getElementById('a3').value.trim();
+  const a4 = document.getElementById('a4').value.trim();
+  const correct = document.querySelector('input[name="correct"]:checked');
+  const exp = document.getElementById('q-exp').value.trim();
 
-  if(!qText || answers.includes('') || correct===undefined){
-    alert('מלא את כל השדות ושאלה נכונה!');
-    return;
-  }
+  if(!qText || !a1 || !a2 || !a3 || !a4 || !correct){ alert('מלא את כל השדות'); return; }
 
-  defaultQuestions[level].push({q:qText,a:answers,c:Number(correct),exp});
-  document.getElementById('toast').style.display='block';
-  setTimeout(()=>{document.getElementById('toast').style.display='none';},2000);
+  const newQ = { q:qText, a:[a1,a2,a3,a4], c:parseInt(correct.value), exp };
+  defaultQuestions[level].push(newQ);
 
+  // show toast
+  const toast = document.getElementById('toast');
+  toast.style.display='block';
+  setTimeout(()=>toast.style.display='none',2000);
+
+  // clear inputs
   document.getElementById('q-input').value='';
   document.getElementById('a1').value='';
   document.getElementById('a2').value='';
   document.getElementById('a3').value='';
   document.getElementById('a4').value='';
-  document.querySelector('input[name="correct"]:checked').checked=false;
   document.getElementById('q-exp').value='';
+  document.querySelectorAll('input[name="correct"]').forEach(i=>i.checked=false);
+  renderQuestionsList();
 }
 
+// ========= LIST QUESTIONS =========
+function renderQuestionsList(){
+  const filter = document.getElementById('filter-level').value;
+  const listEl = document.getElementById('questions-list');
+  listEl.innerHTML = '';
+
+  let allQs = [];
+  if(filter==='all'){
+    allQs = [...defaultQuestions.easy, ...defaultQuestions.medium, ...defaultQuestions.hard];
+  } else {
+    allQs = [...defaultQuestions[filter]];
+  }
+
+  allQs.forEach((q,i)=>{
+    const div = document.createElement('div');
+    div.className='q-item';
+    div.innerHTML = `<div class="q-text">${q.q}</div>
+                     <div class="q-meta">${levelText(filter==='all'?getLevelByQuestion(q):filter)}</div>
+                     <button class="del-btn" onclick="deleteQuestion('${filter==='all'?getLevelByQuestion(q):filter}',${i})">מחק</button>`;
+    listEl.appendChild(div);
+  });
+}
+
+function getLevelByQuestion(q){
+  if(defaultQuestions.easy.includes(q)) return 'easy';
+  if(defaultQuestions.medium.includes(q)) return 'medium';
+  return 'hard';
+}
+
+function deleteQuestion(level,index){
+  defaultQuestions[level].splice(index,1);
+  renderQuestionsList();
+}
 </script>
 </body>
 </html>
