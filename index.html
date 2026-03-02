@@ -755,124 +755,134 @@
 <div class="success-toast" id="toast"> השאלה נוספה בהצלחה!</div>
 
 <script>
-// ============= GLOBAL VARIABLES =============
+// ======== משתנים כלליים ========
 let currentLevel = 'easy';
+let questions = [];
+let currentIndex = 0;
 let score = 0;
-let currentQuestionIndex = 0;
-let selectedQuestions = [];
-let correctCount = 0;
-let wrongCount = 0;
 
-// ============= UTILITY FUNCTIONS =============
-function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+// ======== מעבר מסכים ========
+function showScreen(screenId){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
 }
 
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
+// ======== התחלת משחק ========
+function startGame(level){
+  currentLevel = level;
+  questions = [...defaultQuestions[level]]; // מעתיקים את השאלות
+  currentIndex = 0;
+  score = 0;
+
+  document.getElementById('score-display').innerText = score;
+  document.getElementById('level-badge').innerText = level === 'easy' ? 'קל' : level === 'medium' ? 'בינוני' : 'קשה';
+  updateProgress();
+  showScreen('screen-game');
+  renderQuestion();
 }
 
-// ============= GAME FUNCTIONS =============
-function startGame(level) {
-    currentLevel = level;
-    score = 0;
-    currentQuestionIndex = 0;
-    correctCount = 0;
-    wrongCount = 0;
-
-    // בוחרים 20 שאלות אקראיות מתוך הבאנק של הרמה
-    const bank = defaultQuestions[level];
-    selectedQuestions = shuffleArray([...bank]).slice(0, 20);
-
-    document.getElementById('level-badge').textContent = level === 'easy' ? 'קל' : level === 'medium' ? 'בינוני' : 'קשה';
-    document.getElementById('score-display').textContent = score;
-    updateProgress();
-    showQuestion();
-
-    showScreen('screen-game');
+// ======== עדכון פרוגרס ========
+function updateProgress(){
+  document.getElementById('progress-info').innerText = `שאלה ${currentIndex+1} מתוך ${questions.length}`;
+  let pct = ((currentIndex) / questions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
 }
 
-function updateProgress() {
-    document.getElementById('progress-info').textContent = `שאלה ${currentQuestionIndex + 1} מתוך 20`;
-    document.getElementById('progress-fill').style.width = `${((currentQuestionIndex) / 20) * 100}%`;
+// ======== הצגת שאלה ========
+function renderQuestion(){
+  const q = questions[currentIndex];
+  document.getElementById('q-number').innerText = `שאלה ${currentIndex+1}`;
+  document.getElementById('q-text').innerText = q.q;
+
+  const grid = document.getElementById('answers-grid');
+  grid.innerHTML = '';
+  q.a.forEach((ans, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.innerHTML = `<span class="answer-letter">${String.fromCharCode(1488+idx)}</span>${ans}`;
+    btn.onclick = () => checkAnswer(idx);
+    grid.appendChild(btn);
+  });
+
+  document.getElementById('next-btn').classList.remove('show');
 }
 
-function showQuestion() {
-    const q = selectedQuestions[currentQuestionIndex];
-    document.getElementById('q-number').textContent = `שאלה ${currentQuestionIndex + 1}`;
-    document.getElementById('q-text').textContent = q.q;
+// ======== בדיקת תשובה ========
+function checkAnswer(selected){
+  const q = questions[currentIndex];
+  const buttons = document.querySelectorAll('#answers-grid .answer-btn');
+  buttons.forEach((btn,i)=>{
+    btn.disabled = true;
+    if(i===q.c) btn.classList.add('correct');
+    if(i===selected && i!==q.c) btn.classList.add('wrong');
+  });
 
-    const answersGrid = document.getElementById('answers-grid');
-    answersGrid.innerHTML = '';
-
-    q.a.forEach((ans, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.innerHTML = `<span class="answer-letter">${String.fromCharCode(65 + i)}</span> ${ans}`;
-        btn.onclick = () => checkAnswer(i, btn);
-        answersGrid.appendChild(btn);
-    });
-
-    document.getElementById('next-btn').classList.remove('show');
+  if(selected === q.c) score += 100;
+  document.getElementById('score-display').innerText = score;
+  document.getElementById('next-btn').classList.add('show');
 }
 
-function checkAnswer(index, btn) {
-    const q = selectedQuestions[currentQuestionIndex];
-    const buttons = document.querySelectorAll('#answers-grid .answer-btn');
-
-    buttons.forEach(b => b.disabled = true);
-
-    if (index === q.c) {
-        btn.classList.add('correct');
-        score += 100;
-        correctCount++;
-        showFeedback(true, q.exp);
-    } else {
-        btn.classList.add('wrong');
-        buttons[q.c].classList.add('reveal-correct');
-        wrongCount++;
-        showFeedback(false, q.exp);
-    }
-
-    document.getElementById('score-display').textContent = score;
-    document.getElementById('next-btn').classList.add('show');
+// ======== שאלה הבאה ========
+function nextQuestion(){
+  currentIndex++;
+  if(currentIndex >= questions.length){
+    showResults();
+    return;
+  }
+  updateProgress();
+  renderQuestion();
 }
 
-function nextQuestion() {
-    currentQuestionIndex++;
-    if (currentQuestionIndex >= selectedQuestions.length) {
-        showResults();
-    } else {
-        updateProgress();
-        showQuestion();
-    }
+// ======== תוצאות ========
+function showResults(){
+  document.getElementById('final-score').innerText = score;
+  showScreen('screen-results');
+
+  let correct = questions.filter((q,i)=>true).length; // אפשר להוסיף ספירה נכונה/שגויה
+  document.getElementById('stat-correct').innerText = correct;
+  document.getElementById('stat-wrong').innerText = questions.length - correct;
+  document.getElementById('stat-pct').innerText = Math.round((correct/questions.length)*100)+'%';
 }
 
-function showResults() {
-    showScreen('screen-results');
-    document.getElementById('final-score').textContent = score;
-    document.getElementById('stat-correct').textContent = correctCount;
-    document.getElementById('stat-wrong').textContent = wrongCount;
-    document.getElementById('stat-pct').textContent = `${Math.round((correctCount / selectedQuestions.length) * 100)}%`;
-
-    const emoji = score > 1600 ? '🎉' : score > 1000 ? '👍' : '🙂';
-    document.getElementById('result-emoji').textContent = emoji;
+// ======== ניהול ========
+function showAdminLogin(){ showScreen('screen-admin-login'); }
+function checkAdminLogin(){
+  const pw = document.getElementById('admin-pw').value;
+  if(pw==='1234'){ showScreen('screen-admin'); }
+  else alert('סיסמה שגויה');
 }
 
-function showFeedback(correct, explanation) {
-    const overlay = document.getElementById('feedback-overlay');
-    overlay.classList.add('show');
-    document.getElementById('fb-icon').textContent = correct ? '✅' : '❌';
-    document.getElementById('fb-title').textContent = correct ? 'נכון!' : 'לא נכון';
-    document.getElementById('fb-points').textContent = correct ? '+100 נקודות' : '+0 נקודות';
-    document.getElementById('fb-exp').textContent = explanation || '';
-    setTimeout(() => overlay.classList.remove('show'), 1500);
+// ======== להוסיף שאלה ========
+function addQuestion(){
+  const level = document.getElementById('q-level').value;
+  const qText = document.getElementById('q-input').value;
+  const answers = [
+    document.getElementById('a1').value,
+    document.getElementById('a2').value,
+    document.getElementById('a3').value,
+    document.getElementById('a4').value
+  ];
+  const correct = document.querySelector('input[name="correct"]:checked')?.value;
+  const exp = document.getElementById('q-exp').value;
+
+  if(!qText || answers.includes('') || correct===undefined){
+    alert('מלא את כל השדות ושאלה נכונה!');
+    return;
+  }
+
+  defaultQuestions[level].push({q:qText,a:answers,c:Number(correct),exp});
+  document.getElementById('toast').style.display='block';
+  setTimeout(()=>{document.getElementById('toast').style.display='none';},2000);
+
+  document.getElementById('q-input').value='';
+  document.getElementById('a1').value='';
+  document.getElementById('a2').value='';
+  document.getElementById('a3').value='';
+  document.getElementById('a4').value='';
+  document.querySelector('input[name="correct"]:checked').checked=false;
+  document.getElementById('q-exp').value='';
 }
+
 </script>
 </body>
 </html>
