@@ -129,7 +129,28 @@
  flex-wrap: wrap;
  gap: 8px;
  }
+.daily-update {
+  text-align: center;
+  margin-top: 20px;
+}
 
+.daily-update-box {
+  display: inline-block;
+  background: #ffd93d;
+  border: 2px solid #1a1a2e;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  box-shadow: 4px 4px 0 #1a1a2e;
+  animation: pulseUpdate 2s infinite;
+}
+
+@keyframes pulseUpdate {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
  .score-badge {
  background: #ffd93d;
  border: 2px solid #1a1a2e;
@@ -623,7 +644,11 @@
  <button class="next-btn" id="next-btn" data-action="nextQuestion">שאלה הבאה ←</button>
  </div>
  </div>
-
+<div class="daily-update">
+  <div class="daily-update-box">
+    ✨ כל יום עולים שלבים חדשים לילדים!
+  </div>
+</div>
  <!-- RESULTS SCREEN -->
  <div class="screen" id="screen-results">
  <div class="logo">
